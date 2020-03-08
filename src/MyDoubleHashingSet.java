@@ -5,22 +5,22 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class MyDoubleHashingSet implements Set {
-     private int arraySize = 17;
-    private int elementCounter = 0;
-    private Object hashTable[];
+    private int DEFAULT_ARRAY_SIZE = 17;
+    private int numberOfElementsInStorage = 0;
+    private Object storage[];
 
     MyDoubleHashingSet() {
-        hashTable = new Object[arraySize];
+        storage = new Object[DEFAULT_ARRAY_SIZE];
     }
 
-    public MyDoubleHashingSet(int simpleNumberSize) {
-        if (checkIsItANaturalNumber(simpleNumberSize)) {
-            arraySize = simpleNumberSize;
-            hashTable = new Object[arraySize];
+    public MyDoubleHashingSet(int primeNumberSize) {
+        if (checkIsItPrimeNumber(primeNumberSize)) {
+            DEFAULT_ARRAY_SIZE = primeNumberSize;
+            storage = new Object[DEFAULT_ARRAY_SIZE];
         } else {
 
             try {
-                throw new Exception("Number must be natural");
+                throw new Exception("Number must be prime");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(-1);
@@ -29,14 +29,14 @@ public class MyDoubleHashingSet implements Set {
     }
 
     public MyDoubleHashingSet(Set<?> set) {
-        hashTable = new Object[set.size()];
-        elementCounter = set.size();
-        tableConverter(set.toArray(), elementCounter * 2 / arraySize);
+        storage = new Object[set.size()];
+        numberOfElementsInStorage = set.size();
+        tableConverter(set.toArray(), numberOfElementsInStorage * 2 / DEFAULT_ARRAY_SIZE);
     }
 
     @Override
     public int size() {
-        return elementCounter;
+        return numberOfElementsInStorage;
     }
 
     @Override
@@ -46,10 +46,10 @@ public class MyDoubleHashingSet implements Set {
 
     //TODO
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(Object elementByHashedIndex) {
 
 
-        if (doesObjectEquals(o, hashTable[collisionChecker(o)])) return true;
+        if (doesObjectEquals(elementByHashedIndex, storage[getObjectIndex(elementByHashedIndex)])) return true;
 
         return false;
     }
@@ -67,20 +67,30 @@ public class MyDoubleHashingSet implements Set {
 
     //TODO
     @Override
-    public boolean add(Object o) {
+    public boolean add(Object element) {
 
-        checkArrayOverflow();
+       if ( checkArrayOverflow()){
+           System.out.println("*********");
+           System.out.println("Сurrent array sieze: " + DEFAULT_ARRAY_SIZE);
+           System.out.println("Amount of elements: " + numberOfElementsInStorage);
 
-        int hash = collisionChecker(o);
+           Object tmpArray[] = storage;
+           tableConverter(tmpArray, 2);
+           System.out.println("*********");
+       }
 
-        if (!doesObjectEquals(o, hashTable[hash])){
-            hashTable[hash] = o;
-            elementCounter++;
 
-            System.out.println(Arrays.asList(hashTable));
-            System.out.println("Hash from Object: " + o.hashCode());
-            System.out.println("Hash in MyDoubleHashingSet: " + hashCodeIndexCounter(o.hashCode()));
-            System.out.println("Amount of elements: " + elementCounter);
+
+        int hash = getObjectIndex(element);
+
+        if (!doesObjectEquals(element, storage[hash])) {
+            storage[hash] = element;
+            numberOfElementsInStorage++;
+
+            System.out.println(Arrays.asList(storage));
+            System.out.println("Hash from Object: " + element.hashCode());
+            System.out.println("Hash in MyDoubleHashingSet: " + hashCodeIndexCounter(element.hashCode()));
+            System.out.println("Amount of elements: " + numberOfElementsInStorage);
             System.out.println("________________________");
 
             return true;
@@ -94,15 +104,15 @@ public class MyDoubleHashingSet implements Set {
 
 
     @Override
-    public boolean remove(Object o) {
-        int hash = collisionChecker(o);
+    public boolean remove(Object element) {
+        int hash = getObjectIndex(element);
 
 
-        if (hashTable[hash] !=null && doesObjectEquals(o, hashTable[hash])){
-            hashTable[hash] = null;
-            elementCounter--;
-            System.out.println("Removed '" + o + "' element with hash: " + hash);
-            System.out.println(Arrays.asList(hashTable));
+        if (storage[hash] != null && doesObjectEquals(element, storage[hash])) {
+            storage[hash] = null;
+            numberOfElementsInStorage--;
+            System.out.println("Removed '" + element + "' element with hash: " + hash);
+            System.out.println(Arrays.asList(storage));
             return true;
         }
 
@@ -117,8 +127,8 @@ public class MyDoubleHashingSet implements Set {
 
     @Override
     public void clear() {
-        hashTable = new Object[arraySize];
-        elementCounter = 0;
+        storage = new Object[DEFAULT_ARRAY_SIZE];
+        numberOfElementsInStorage = 0;
     }
 
     @Override
@@ -141,51 +151,43 @@ public class MyDoubleHashingSet implements Set {
         return new Object[0];
     }
 
-    private boolean checkIsItANaturalNumber(int number) {
+    private boolean checkIsItPrimeNumber(int number) {
         BigInteger bigInteger = BigInteger.valueOf(number);
         return bigInteger.isProbablePrime((int) Math.log(number));
     }
 
-    private void checkArrayOverflow() {
-        if (arraySize / 2 <= elementCounter) {
-            System.out.println("*********");
-            System.out.println("Сurrent array sieze: " + arraySize);
-            System.out.println("Amount of elements: " + elementCounter);
-
-            Object tmpArray[] = hashTable;
-
-            tableConverter(tmpArray, 2);
-            System.out.println("*********");
+    private boolean checkArrayOverflow() {
+        if (DEFAULT_ARRAY_SIZE / 2 <= numberOfElementsInStorage) {
+            return true;
         }
-
+        return false;
     }
 
-    private void tableConverter(Object tmpArray[], int arrayIncrease) {
-        for (int newArraySize = arraySize * arrayIncrease; ; newArraySize++) {
+    private void tableConverter(Object tmpArray[], int newLargerArraySize) {
+        for (int newArraySize = DEFAULT_ARRAY_SIZE * newLargerArraySize; ; newArraySize++) {
             System.out.println("New Array Size before natural check: " + newArraySize);
-            if (checkIsItANaturalNumber(newArraySize)) {
-                System.out.println("Намбер " + newArraySize + " из натурал)))))");
-                System.out.println("New natural array size: " + newArraySize);
-                arraySize = newArraySize;
-                hashTable = new Object[arraySize];
-                tableSetter(tmpArray);
+            if (checkIsItPrimeNumber(newArraySize)) {
+                System.out.println("Намбер " + newArraySize + " из прайм)))))");
+                System.out.println("New prime array size: " + newArraySize);
+                DEFAULT_ARRAY_SIZE = newArraySize;
+                storage = new Object[DEFAULT_ARRAY_SIZE];
+
+                for (Object object : tmpArray) {
+                    if (object != null) {
+                        storage[getObjectIndex(object)] = object;
+                    }
+                }
                 break;
             }
         }
     }
 
-    private void tableSetter(Object tmpArray[]) {
-        for (Object object : tmpArray) {
-            if (object != null) {
-                hashTable[collisionChecker(object)] = object;
-            }
-        }
-    }
+
 
     private int hashCodeIndexCounter(int hashCOde) {
 
 
-        return Math.abs(hashCOde % arraySize);
+        return Math.abs(hashCOde % DEFAULT_ARRAY_SIZE);
     }
 
     private boolean doesObjectEquals(Object o, Object o2) {
@@ -202,26 +204,26 @@ public class MyDoubleHashingSet implements Set {
     }
 
 
-    private int collisionChecker(Object o) {
+    private int getObjectIndex(Object o) {
         int collisionHashcode = hashCodeIndexCounter(o.hashCode());
         int count = 0;
 
         System.out.println("Hash from collisionCheker: " + collisionHashcode);
 
         while (true) {
-            if (hashTable[collisionHashcode] == null) {
+            if (storage[collisionHashcode] == null) {
                 System.out.println("Empty cell: " + collisionHashcode + " -out from cycle");
                 return collisionHashcode;
 
 
             } else {
 
-                if (doesObjectEquals(o, hashTable[collisionHashcode])) {
+                if (doesObjectEquals(o, storage[collisionHashcode])) {
                     System.out.println("Objects are equals " + collisionHashcode);
                     return collisionHashcode;
                 } else {
                     collisionHashcode = (hashCodeIndexCounter(o.hashCode()) +
-                            count * (1 + hashCodeIndexCounter(o.hashCode()) % (arraySize / 2))) % arraySize;
+                            count * (1 + hashCodeIndexCounter(o.hashCode()) % (DEFAULT_ARRAY_SIZE / 2))) % DEFAULT_ARRAY_SIZE;
                     System.out.println("New object hash: " + collisionHashcode);
 
                     count++;
@@ -235,10 +237,10 @@ public class MyDoubleHashingSet implements Set {
 
     @Override
     public String toString() {
-        Object returnArray[] = new Object[elementCounter];
+        Object returnArray[] = new Object[numberOfElementsInStorage];
 
         int count = 0;
-        for (Object obj : hashTable) {
+        for (Object obj : storage) {
             if (obj != null) {
                 returnArray[count] = obj;
                 count++;
